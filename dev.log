@@ -1,0 +1,123 @@
+
+> healthiclinic-dashboard@0.1.0 dev
+> next dev -p 3005
+
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3005
+   - Environments: .env.local
+
+ ✓ Ready in 1087ms
+ ○ Compiling /not-found ...
+ ✓ Compiled /not-found in 3s (1211 modules)
+ ✓ Compiled in 156ms (609 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 1483ms (2467 modules)
+ ✓ Compiled /admin in 213ms (2494 modules)
+ ✓ Compiled in 451ms (2508 modules)
+ ✓ Compiled in 248ms (2508 modules)
+ ✓ Compiled in 352ms (2508 modules)
+ ✓ Compiled in 404ms (2508 modules)
+ ✓ Compiled in 204ms (2508 modules)
+ ✓ Compiled in 210ms (2508 modules)
+ ✓ Compiled in 187ms (1254 modules)
+ ✓ Compiled in 312ms (1391 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 178ms (702 modules)
+ ✓ Compiled in 660ms (2494 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 446ms (2494 modules)
+ ✓ Compiled in 208ms (1254 modules)
+ ✓ Compiled in 121ms (1254 modules)
+ ✓ Compiled in 93ms (1254 modules)
+ ✓ Compiled in 134ms (2494 modules)
+ ✓ Compiled in 377ms (2508 modules)
+ ✓ Compiled in 306ms (2508 modules)
+ ✓ Compiled in 367ms (2510 modules)
+ ✓ Compiled in 247ms (2510 modules)
+ ✓ Compiled in 194ms (2510 modules)
+ ✓ Compiled in 186ms (2510 modules)
+ ✓ Compiled /carousel in 263ms (2517 modules)
+ ✓ Compiled in 223ms (1264 modules)
+ ✓ Compiled in 127ms (1264 modules)
+ ✓ Compiled in 218ms (2517 modules)
+ ✓ Compiled in 113ms (1264 modules)
+ ✓ Compiled in 665ms (2557 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 180ms (2557 modules)
+ ✓ Compiled in 196ms (2557 modules)
+ ✓ Compiled in 220ms (1277 modules)
+ ✓ Compiled in 274ms (2535 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 346ms (2553 modules)
+ ✓ Compiled in 436ms (2553 modules)
+ ✓ Compiled in 255ms (2553 modules)
+ ✓ Compiled in 198ms (2553 modules)
+ ✓ Compiled in 242ms (2553 modules)
+ ✓ Compiled in 149ms (1275 modules)
+ ✓ Compiled in 118ms (1275 modules)
+ ✓ Compiled in 314ms (2553 modules)
+ ✓ Compiled in 408ms (2553 modules)
+ ✓ Compiled in 256ms (2553 modules)
+ ✓ Compiled in 224ms (2553 modules)
+ ✓ Compiled in 209ms (1275 modules)
+ ✓ Compiled in 126ms (1275 modules)
+ ✓ Compiled in 217ms (1275 modules)
+ ✓ Compiled in 601ms (2555 modules)
+ ✓ Compiled in 390ms (2555 modules)
+ ⨯ ./components/DataEntry.tsx:12:0
+Module not found: Can't resolve '@/components/ui/button'
+[0m [90m 10 |[39m [36mimport[39m [33mSetupNotice[39m [36mfrom[39m [32m"@/components/SetupNotice"[39m[0m
+[0m [90m 11 |[39m [36mimport[39m [33mWeekCalendarPicker[39m [36mfrom[39m [32m"./WeekCalendarPicker"[39m[0m
+[0m[31m[1m>[22m[39m[90m 12 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m[0m
+[0m [90m 13 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m"@/components/ui/input"[39m[0m
+[0m [90m 14 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m"@/components/ui/textarea"[39m[0m
+[0m [90m 15 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"@/components/ui/label"[39m[0m
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./components/AdminPanel.tsx
+ ⨯ ./components/DataEntry.tsx:12:0
+Module not found: Can't resolve '@/components/ui/button'
+[0m [90m 10 |[39m [36mimport[39m [33mSetupNotice[39m [36mfrom[39m [32m"@/components/SetupNotice"[39m[0m
+[0m [90m 11 |[39m [36mimport[39m [33mWeekCalendarPicker[39m [36mfrom[39m [32m"./WeekCalendarPicker"[39m[0m
+[0m[31m[1m>[22m[39m[90m 12 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m[0m
+[0m [90m 13 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m"@/components/ui/input"[39m[0m
+[0m [90m 14 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m"@/components/ui/textarea"[39m[0m
+[0m [90m 15 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"@/components/ui/label"[39m[0m
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./components/AdminPanel.tsx
+ ⨯ ./components/DataEntry.tsx:12:0
+Module not found: Can't resolve '@/components/ui/button'
+[0m [90m 10 |[39m [36mimport[39m [33mSetupNotice[39m [36mfrom[39m [32m"@/components/SetupNotice"[39m[0m
+[0m [90m 11 |[39m [36mimport[39m [33mWeekCalendarPicker[39m [36mfrom[39m [32m"./WeekCalendarPicker"[39m[0m
+[0m[31m[1m>[22m[39m[90m 12 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m[0m
+[0m [90m 13 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m"@/components/ui/input"[39m[0m
+[0m [90m 14 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m"@/components/ui/textarea"[39m[0m
+[0m [90m 15 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"@/components/ui/label"[39m[0m
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./components/AdminPanel.tsx
+ ○ Compiling /_error ...
+ ⨯ ./components/DataEntry.tsx:12:0
+Module not found: Can't resolve '@/components/ui/button'
+[0m [90m 10 |[39m [36mimport[39m [33mSetupNotice[39m [36mfrom[39m [32m"@/components/SetupNotice"[39m[0m
+[0m [90m 11 |[39m [36mimport[39m [33mWeekCalendarPicker[39m [36mfrom[39m [32m"./WeekCalendarPicker"[39m[0m
+[0m[31m[1m>[22m[39m[90m 12 |[39m [36mimport[39m { [33mButton[39m } [36mfrom[39m [32m"@/components/ui/button"[39m[0m
+[0m [90m 13 |[39m [36mimport[39m { [33mInput[39m } [36mfrom[39m [32m"@/components/ui/input"[39m[0m
+[0m [90m 14 |[39m [36mimport[39m { [33mTextarea[39m } [36mfrom[39m [32m"@/components/ui/textarea"[39m[0m
+[0m [90m 15 |[39m [36mimport[39m { [33mLabel[39m } [36mfrom[39m [32m"@/components/ui/label"[39m[0m
+
+https://nextjs.org/docs/messages/module-not-found
+
+Import trace for requested module:
+./components/AdminPanel.tsx
+ ✓ Compiled /_error in 788ms (2752 modules)
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.

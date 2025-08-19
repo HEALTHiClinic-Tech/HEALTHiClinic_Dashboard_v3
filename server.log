@@ -1,0 +1,18 @@
+
+> healthiclinic-dashboard@0.1.0 dev
+> next dev -p 3005
+
+   ▲ Next.js 14.1.0
+   - Local:        http://localhost:3005
+
+ ✓ Ready in 1251ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.5s (2485 modules)
+ ✓ Compiled in 245ms (1240 modules)
+ ○ Compiling /not-found ...
+ ✓ Compiled /not-found in 756ms (2467 modules)
+ ✓ Compiled /admin in 335ms (2494 modules)
+   Reload env: .env.local
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ ✓ Compiled in 2.6s (2494 modules)
