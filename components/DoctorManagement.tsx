@@ -230,8 +230,7 @@ export default function DoctorManagement() {
     return (
       doctor.first_name.toLowerCase().includes(searchLower) ||
       doctor.last_name.toLowerCase().includes(searchLower) ||
-      doctor.specialty?.toLowerCase().includes(searchLower) ||
-      doctor.employee_id?.toLowerCase().includes(searchLower)
+      doctor.specialty?.toLowerCase().includes(searchLower)
     )
   })
 
@@ -482,8 +481,6 @@ export default function DoctorManagement() {
                           </h3>
                           <div className="flex items-center space-x-4 text-sm text-gray-600">
                             <span>{doctor.specialty || 'General Practice'}</span>
-                            <span>ID: {doctor.employee_id || 'N/A'}</span>
-                            {doctor.email && <span>{doctor.email}</span>}
                           </div>
                         </div>
                       </div>
@@ -582,7 +579,7 @@ export default function DoctorManagement() {
                         <Hash className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-600">Employee ID</p>
-                          <p className="font-medium">{selectedDoctor.employee_id || 'N/A'}</p>
+                          <p className="font-medium">N/A</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -611,14 +608,14 @@ export default function DoctorManagement() {
                         <Mail className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-600">Email</p>
-                          <p className="font-medium">{selectedDoctor.email || 'N/A'}</p>
+                          <p className="font-medium">N/A</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Phone className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-600">Phone</p>
-                          <p className="font-medium">{selectedDoctor.phone || 'N/A'}</p>
+                          <p className="font-medium">N/A</p>
                         </div>
                       </div>
                     </div>

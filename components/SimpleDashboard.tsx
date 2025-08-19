@@ -36,7 +36,7 @@ export default function SimpleDashboard() {
       setWeeklyTrends(trendsData || [])
     } catch (err) {
       console.error('Error:', err)
-      setError(err.message)
+      setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {
       setLoading(false)
     }
