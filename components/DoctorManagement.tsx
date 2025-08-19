@@ -219,9 +219,9 @@ export default function DoctorManagement() {
       first_name: doctor.first_name,
       last_name: doctor.last_name,
       specialty: doctor.specialty || "",
-      email: doctor.email || "",
-      phone: doctor.phone || "",
-      employee_id: doctor.employee_id || ""
+      email: "",
+      phone: "",
+      employee_id: ""
     })
   }
 
