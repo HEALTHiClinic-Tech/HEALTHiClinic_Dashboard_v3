@@ -1,7 +1,7 @@
 "use client"
 
-import DoctorCarousel from '@/components/DoctorCarousel'
+import Carousel2 from '@/components/Carousel2'
 
 export default function CarouselPage() {
-  return <DoctorCarousel />
+  return <Carousel2 />
 }
