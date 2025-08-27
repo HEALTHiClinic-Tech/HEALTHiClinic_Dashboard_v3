@@ -15,9 +15,9 @@ export default function AdminPanel() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+    <div className="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-[calc(100vh-5rem)]">
       {/* Tab Navigation */}
-      <div className="bg-white border-b sticky top-16 z-40">
+      <div className="bg-white border-b sticky top-20 z-40">
         <div className="max-w-6xl mx-auto px-8">
           <div className="flex space-x-8">
             {tabs.map((tab) => {

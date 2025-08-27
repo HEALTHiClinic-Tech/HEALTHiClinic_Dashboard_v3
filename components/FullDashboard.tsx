@@ -23,8 +23,9 @@ import {
   Cell
 } from "recharts"
 import { format, getWeek } from "date-fns"
+import { getDoctorColor, getDoctorColors } from "@/lib/doctorThemes"
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
+const COLORS = getDoctorColors()
 
 export default function FullDashboard() {
   const router = useRouter()
@@ -96,6 +97,44 @@ export default function FullDashboard() {
     }
   }
 
+  // Convert weekly trends to monthly trends
+  const monthlyTrends = (() => {
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const monthData = new Map()
+    
+    weeklyTrends.forEach(week => {
+      // Calculate which month this week belongs to
+      const monthIndex = Math.floor((week.week_number - 1) / 4.33)
+      if (monthIndex >= 0 && monthIndex < 12) {
+        const monthKey = monthNames[monthIndex]
+        const existing = monthData.get(monthKey) || { 
+          appointments: 0, 
+          doctors: new Set(),
+          weekCount: 0 
+        }
+        existing.appointments += week.total_appointments
+        existing.weekCount++
+        // Track unique doctors
+        for (let i = 0; i < week.active_doctors; i++) {
+          existing.doctors.add(i)
+        }
+        monthData.set(monthKey, existing)
+      }
+    })
+    
+    return monthNames
+      .filter(month => monthData.has(month))
+      .map(month => {
+        const data = monthData.get(month)
+        return {
+          month,
+          total_appointments: data.appointments,
+          active_doctors: data.doctors.size || doctorStats.length,
+          avg_appointments: Math.round(data.appointments / data.weekCount)
+        }
+      })
+  })()
+
   const totalAppointments = doctorStats.reduce((sum, doc) => sum + doc.total_appointments, 0)
   const totalDoctors = doctorStats.length
   const avgAppointmentsPerDoctor = totalDoctors > 0 ? Math.round(totalAppointments / totalDoctors) : 0
@@ -110,7 +149,7 @@ export default function FullDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <motion.div
           animate={{
             scale: [1, 1.2, 1],
@@ -128,7 +167,7 @@ export default function FullDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8">
+    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div 
@@ -252,12 +291,12 @@ export default function FullDashboard() {
           >
             <Card className="h-[400px]">
               <CardHeader>
-                <CardTitle>Weekly Appointment Trends</CardTitle>
-                <CardDescription>Appointments per week throughout {currentYear}</CardDescription>
+                <CardTitle>Monthly Appointment Trends</CardTitle>
+                <CardDescription>Appointments per month throughout {currentYear}</CardDescription>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
-                  <AreaChart data={weeklyTrends}>
+                  <AreaChart data={monthlyTrends}>
                     <defs>
                       <linearGradient id="colorAppointments" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
@@ -265,7 +304,7 @@ export default function FullDashboard() {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="week_number" />
+                    <XAxis dataKey="month" />
                     <YAxis />
                     <Tooltip />
                     <Area 
@@ -305,7 +344,7 @@ export default function FullDashboard() {
                     <Tooltip />
                     <Bar dataKey="total_appointments">
                       {doctorStats.slice(0, 8).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${index}`} fill={getDoctorColor(entry)} />
                       ))}
                     </Bar>
                   </BarChart>

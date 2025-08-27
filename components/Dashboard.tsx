@@ -143,7 +143,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
         <motion.div
           animate={{
             scale: [1, 1.2, 1],
@@ -162,7 +162,7 @@ export default function Dashboard() {
 
   if (!loading && totalAppointments === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8">
+      <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8">
         <div className="max-w-4xl mx-auto">
           <Card className="border-amber-200 bg-amber-50/50">
             <CardHeader>
@@ -195,7 +195,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8">
+    <div className="min-h-[calc(100vh-5rem)] bg-gradient-to-br from-blue-50 via-white to-purple-50 p-8">
       <motion.div
         variants={containerVariants}
         initial="hidden"
