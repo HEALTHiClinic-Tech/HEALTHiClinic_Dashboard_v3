@@ -19,9 +19,11 @@ import {
   User,
   Calendar,
   Activity,
-  Target
+  Target,
+  ExternalLink
 } from "lucide-react"
 import { format } from "date-fns"
+import { useRouter } from 'next/navigation'
 
 interface DoctorStats {
   total_appointments: number
@@ -30,6 +32,7 @@ interface DoctorStats {
 }
 
 export default function DoctorManagementSimple() {
+  const router = useRouter()
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [loading, setLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -506,8 +509,12 @@ export default function DoctorManagementSimple() {
                           {doctor.first_name[0]}{doctor.last_name[0]}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">
+                          <h3 
+                            className="font-semibold text-lg inline-flex items-center cursor-pointer hover:text-blue-600 transition-colors group"
+                            onClick={() => router.push(`/doctor/${doctor.id}`)}
+                          >
                             {doctor.title} {doctor.first_name} {doctor.last_name}
+                            <ExternalLink className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                             {!doctor.active && (
                               <span className="ml-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
                                 Inactive

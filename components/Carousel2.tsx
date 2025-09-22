@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase"
 import { DoctorStatsYTD } from "@/types/database"
 import { ChevronLeft, ChevronRight, Play, Pause, Activity, TrendingUp, Target, Trophy, Calendar, Sparkles, Maximize, Minimize } from "lucide-react"
 import React from "react"
+import { getWeek, startOfWeek, addWeeks, format } from "date-fns"
 
 type TimeInterval = 'weekly' | 'monthly' | '3-monthly' | '6-monthly' | 'ytd' | 'all-time'
 
@@ -58,15 +59,64 @@ export default function Carousel2() {
 
   const fetchDoctorStats = async () => {
     try {
-      const { data, error } = await supabase
-        .from('doctor_stats_ytd')
-        .select('*')
-        .order('total_appointments', { ascending: false })
-
-      if (error) throw error
+      const currentYear = new Date().getFullYear()
+      const currentWeek = Math.ceil((new Date().getTime() - new Date(currentYear, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))
       
-      if (data && data.length > 0) {
-        setDoctors(data)
+      // Fetch doctors and their weekly appointments
+      const { data: doctorsData, error: doctorsError } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('active', true)
+
+      const { data: weeklyData, error: weeklyError } = await supabase
+        .from('weekly_appointments')
+        .select('*')
+        .eq('year', currentYear)
+
+      const { data: targetsData, error: targetsError } = await supabase
+        .from('appointment_targets')
+        .select('*')
+        .eq('year', currentYear)
+
+      if (doctorsError) throw doctorsError
+      if (weeklyError) throw weeklyError
+      
+      if (doctorsData && doctorsData.length > 0) {
+        // Transform to match expected format
+        const transformedData = doctorsData.map(doctor => {
+          // Get all weekly appointments for this doctor
+          const doctorWeekly = weeklyData?.filter(w => w.doctor_id === doctor.id) || []
+          
+          // Calculate total appointments for the year
+          const totalAppointments = doctorWeekly.reduce((sum, week) => sum + (week.appointment_count || 0), 0)
+          
+          // Get the doctor's target
+          const doctorTarget = targetsData?.find(t => t.doctor_id === doctor.id)
+          const weeklyTarget = doctor.weekly_target || doctorTarget?.weekly_target || 80
+          const yearlyTarget = doctorTarget?.yearly_target || (weeklyTarget * 52)
+          
+          // Calculate weeks worked (weeks with data)
+          const weeksWorked = doctorWeekly.length || 1
+          
+          return {
+            doctor_id: doctor.id,
+            doctor_name: `${doctor.title || 'Dr.'} ${doctor.first_name} ${doctor.last_name}`,
+            title: doctor.title || 'Dr.',
+            first_name: doctor.first_name,
+            last_name: doctor.last_name,
+            specialty: doctor.specialty || 'General Practice',
+            year: currentYear,
+            total_appointments: totalAppointments,
+            weekly_target: weeklyTarget,
+            avg_appointments_per_week: weeksWorked > 0 ? Math.round(totalAppointments / weeksWorked) : 0,
+            weeks_worked: weeksWorked,
+            target_completion_percentage: yearlyTarget > 0 ? Math.round((totalAppointments / yearlyTarget) * 100) : 0,
+            max_weekly_appointments: Math.max(...doctorWeekly.map(w => w.appointment_count || 0), 0),
+            min_weekly_appointments: Math.min(...doctorWeekly.map(w => w.appointment_count || 0), 0)
+          }
+        }).sort((a, b) => b.total_appointments - a.total_appointments)
+        
+        setDoctors(transformedData)
       } else {
         setError('No doctor data available')
       }
@@ -80,6 +130,7 @@ export default function Carousel2() {
 
   const fetchChartData = async (doctorId: string, interval: TimeInterval) => {
     try {
+      // Fetch weekly appointments for this doctor
       const { data, error } = await supabase
         .from('weekly_appointments')
         .select('*')
@@ -90,44 +141,39 @@ export default function Carousel2() {
       if (error) throw error
 
       if (data && data.length > 0) {
-        console.log('Raw data from Supabase:', data)
+        console.log('Raw weekly data from Supabase:', data)
         let formattedData: ChartDataPoint[] = []
         
         const currentDate = new Date()
         const currentYear = currentDate.getFullYear()
         const currentMonth = currentDate.getMonth() + 1
-        const currentWeek = Math.ceil((currentDate.getDate() + new Date(currentYear, currentMonth - 1, 1).getDay()) / 7)
+        const currentWeek = getWeek(currentDate, { weekStartsOn: 1 })
         
         // Helper function to get Monday date for a week number
         const getMondayDate = (year: number, weekNumber: number) => {
           const jan1 = new Date(year, 0, 1)
-          const daysToAdd = (weekNumber - 1) * 7
-          const firstMonday = new Date(jan1)
-          const dayOfWeek = jan1.getDay()
-          const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7
-          firstMonday.setDate(jan1.getDate() + daysUntilMonday + daysToAdd)
-          const month = firstMonday.toLocaleString('en-US', { month: 'short' })
-          const day = firstMonday.getDate()
-          return `${month} ${day}`
+          const firstWeekMonday = startOfWeek(jan1, { weekStartsOn: 1 })
+          const targetMonday = addWeeks(firstWeekMonday, weekNumber - 1)
+          return format(targetMonday, 'MMM d')
         }
         
         switch (interval) {
           case 'weekly':
-            // Show from beginning of current year to date
+            // Show weekly data for current year
             const yearData = data.filter(w => w.year === currentYear)
             formattedData = yearData.map(w => ({
               label: getMondayDate(currentYear, w.week_number),
               value: Number(w.appointment_count) || 0
             }))
-            // If more than 12 weeks, show last 12 for better visibility
+            // Show last 12 weeks for better visibility
             if (formattedData.length > 12) {
               formattedData = formattedData.slice(-12)
             }
             break
             
           case 'monthly':
-            // Show last 4 weeks with Monday dates
-            const last4Weeks = data.slice(-4)
+            // Show last 4 weeks
+            const last4Weeks = data.filter(w => w.year === currentYear).slice(-4)
             formattedData = last4Weeks.map(w => ({
               label: getMondayDate(w.year, w.week_number),
               value: Number(w.appointment_count) || 0
@@ -168,12 +214,9 @@ export default function Carousel2() {
             
             data.forEach(w => {
               const monthFromWeek = Math.ceil(w.week_number / 4.33)
-              const effectiveYear = monthFromWeek + sixMonthsAgo <= 0 ? currentYear - 1 : currentYear
-              const effectiveMonth = monthFromWeek + sixMonthsAgo <= 0 ? 12 + (monthFromWeek + sixMonthsAgo) : monthFromWeek
               
-              if ((effectiveYear === currentYear && effectiveMonth >= Math.max(1, sixMonthsAgo) && effectiveMonth <= currentMonth) ||
-                  (effectiveYear === currentYear - 1 && sixMonthsAgo < 1)) {
-                const monthKey = `${w.year}-${String(Math.ceil(w.week_number / 4.33)).padStart(2, '0')}`
+              if (w.year === currentYear && monthFromWeek >= Math.max(1, sixMonthsAgo) && monthFromWeek <= currentMonth) {
+                const monthKey = `${w.year}-${String(monthFromWeek).padStart(2, '0')}`
                 if (!monthlyData6[monthKey]) monthlyData6[monthKey] = 0
                 monthlyData6[monthKey] += Number(w.appointment_count) || 0
               }
@@ -217,18 +260,14 @@ export default function Carousel2() {
             break
             
           case 'all-time':
-            // All time from September (month 9) to current - aggregate by month
+            // All time - aggregate all data by month
             const monthlyDataAll: { [key: string]: number } = {}
             
             data.forEach(w => {
               const monthFromWeek = Math.ceil(w.week_number / 4.33)
-              // Include data from September (month 9) onwards
-              if ((w.year === currentYear - 1 && monthFromWeek >= 9) || 
-                  (w.year === currentYear && monthFromWeek <= currentMonth)) {
-                const monthKey = `${w.year}-${String(monthFromWeek).padStart(2, '0')}`
-                if (!monthlyDataAll[monthKey]) monthlyDataAll[monthKey] = 0
-                monthlyDataAll[monthKey] += Number(w.appointment_count) || 0
-              }
+              const monthKey = `${w.year}-${String(monthFromWeek).padStart(2, '0')}`
+              if (!monthlyDataAll[monthKey]) monthlyDataAll[monthKey] = 0
+              monthlyDataAll[monthKey] += Number(w.appointment_count) || 0
             })
             
             const monthNamesAll = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']

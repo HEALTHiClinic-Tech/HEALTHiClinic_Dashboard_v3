@@ -4,8 +4,11 @@ import { useEffect, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabase, isConfigured } from "@/lib/supabase"
 import { DoctorStatsYTD, WeeklyTrend } from "@/types/database"
+import { useRouter } from 'next/navigation'
+import { ExternalLink } from "lucide-react"
 
 export default function SimpleDashboard() {
+  const router = useRouter()
   const [doctorStats, setDoctorStats] = useState<DoctorStatsYTD[]>([])
   const [weeklyTrends, setWeeklyTrends] = useState<WeeklyTrend[]>([])
   const [loading, setLoading] = useState(true)
@@ -18,22 +21,79 @@ export default function SimpleDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const { data: statsData, error: statsError } = await supabase
-        .from('doctor_stats_ytd')
+      // Fetch doctors and their weekly appointments
+      const { data: doctorsData, error: doctorsError } = await supabase
+        .from('doctors')
+        .select('*')
+        .eq('active', true)
+
+      const { data: weeklyData, error: weeklyError } = await supabase
+        .from('weekly_appointments')
         .select('*')
         .eq('year', currentYear)
 
-      const { data: trendsData, error: trendsError } = await supabase
-        .from('weekly_trends')
+      const { data: targetsData, error: targetsError } = await supabase
+        .from('appointment_targets')
         .select('*')
         .eq('year', currentYear)
-        .order('week_number', { ascending: true })
 
-      if (statsError) throw statsError
-      if (trendsError) throw trendsError
+      if (doctorsError) throw doctorsError
+      if (weeklyError) throw weeklyError
 
-      setDoctorStats(statsData || [])
-      setWeeklyTrends(trendsData || [])
+      // Transform doctors data to match expected format
+      const transformedStats = doctorsData?.map(doctor => {
+        // Get all weekly appointments for this doctor
+        const doctorWeekly = weeklyData?.filter(w => w.doctor_id === doctor.id) || []
+        
+        // Calculate total appointments for the year
+        const totalAppointments = doctorWeekly.reduce((sum, week) => sum + (week.appointment_count || 0), 0)
+        
+        // Get the doctor's target
+        const doctorTarget = targetsData?.find(t => t.doctor_id === doctor.id)
+        const weeklyTarget = doctor.weekly_target || doctorTarget?.weekly_target || 80
+        
+        return {
+          id: doctor.id,
+          doctor_id: doctor.id,
+          doctor_name: `${doctor.title || 'Dr.'} ${doctor.first_name} ${doctor.last_name}`,
+          title: doctor.title || 'Dr.',
+          first_name: doctor.first_name,
+          last_name: doctor.last_name,
+          specialty: doctor.specialty || 'General Practice',
+          year: currentYear,
+          total_appointments: totalAppointments,
+          completed_appointments: 0, // Not tracked in current schema
+          cancelled_appointments: 0, // Not tracked in current schema
+          revenue: 0, // Not tracked in current schema
+          patient_satisfaction: 95, // Default value
+          weeks_worked: doctorWeekly.length || 1,
+          avg_appointments_per_week: doctorWeekly.length > 0 ? Math.round(totalAppointments / doctorWeekly.length) : 0,
+          max_weekly_appointments: Math.max(...doctorWeekly.map(w => w.appointment_count || 0), 0),
+          min_weekly_appointments: Math.min(...doctorWeekly.map(w => w.appointment_count || 0), 0),
+          weekly_target: weeklyTarget,
+          target_completion_percentage: 0,
+          created_at: doctor.created_at,
+          updated_at: doctor.updated_at
+        }
+      }) || []
+
+      setDoctorStats(transformedStats)
+      
+      // Transform weekly data to trends
+      const weeklyTrendsData = []
+      for (let week = 1; week <= 52; week++) {
+        const weekData = weeklyData?.filter(w => w.week_number === week) || []
+        if (weekData.length > 0) {
+          weeklyTrendsData.push({
+            week_number: week,
+            year: currentYear,
+            total_appointments: weekData.reduce((sum, w) => sum + (w.appointment_count || 0), 0),
+            active_doctors: weekData.length,
+            avg_appointments: Math.round(weekData.reduce((sum, w) => sum + (w.appointment_count || 0), 0) / weekData.length)
+          })
+        }
+      }
+      setWeeklyTrends(weeklyTrendsData)
     } catch (err) {
       console.error('Error:', err)
       setError(err instanceof Error ? err.message : 'An error occurred')
@@ -101,8 +161,12 @@ export default function SimpleDashboard() {
             <div className="space-y-2">
               {doctorStats.map((doctor) => (
                 <div key={doctor.doctor_id} className="p-2 border rounded">
-                  <p className="font-medium">
+                  <p 
+                    className="font-medium cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center group"
+                    onClick={() => router.push(`/doctor/${doctor.doctor_id}`)}
+                  >
                     Dr. {doctor.first_name} {doctor.last_name}
+                    <ExternalLink className="ml-2 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </p>
                   <p className="text-sm text-gray-600">
                     Appointments: {Number(doctor.total_appointments) || 0}

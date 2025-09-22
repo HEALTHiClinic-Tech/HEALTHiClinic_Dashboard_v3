@@ -4,15 +4,76 @@
 
    ▲ Next.js 14.1.0
    - Local:        http://localhost:3005
+   - Environments: .env.local
 
- ✓ Ready in 1251ms
+ ✓ Ready in 1146ms
  ○ Compiling / ...
- ✓ Compiled / in 3.5s (2485 modules)
- ✓ Compiled in 245ms (1240 modules)
- ○ Compiling /not-found ...
- ✓ Compiled /not-found in 756ms (2467 modules)
- ✓ Compiled /admin in 335ms (2494 modules)
-   Reload env: .env.local
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
- ✓ Compiled in 2.6s (2494 modules)
+ ✓ Compiled / in 1549ms (2514 modules)
+ ✓ Compiled in 290ms (1259 modules)
+ ○ Compiling /carousel2 ...
+ ✓ Compiled /carousel2 in 518ms (2541 modules)
+ ✓ Compiled in 429ms (2555 modules)
+ ✓ Compiled in 161ms (1278 modules)
+ ✓ Compiled /not-found in 446ms (2546 modules)
+ ✓ Compiled in 232ms (1280 modules)
+ ⨯ Error: Cannot find module './189.js'
+Require stack:
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/webpack-runtime.js
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/app/not-found.js
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/require.js
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/load-components.js
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/build/utils.js
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/dev/hot-middleware.js
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/dev/hot-reloader-webpack.js
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/lib/router-server.js
+- /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/lib/start-server.js
+    at Function.<anonymous> (node:internal/modules/cjs/loader:1401:15)
+    at /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/require-hook.js:55:36
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1057:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1062:22)
+    at Function._load (node:internal/modules/cjs/loader:1211:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at __webpack_require__.f.require (/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/webpack-runtime.js:198:28)
+    at /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/webpack-runtime.js:111:40
+    at Array.reduce (<anonymous>)
+    at __webpack_require__.e (/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/webpack-runtime.js:110:67)
+    at Array.map (<anonymous>)
+    at __webpack_require__.X (/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/webpack-runtime.js:162:22)
+    at /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/app/carousel2/page.js:1:2666
+    at Object.<anonymous> (/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/app/carousel2/page.js:1:2720)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.<anonymous> (node:internal/modules/cjs/loader:1487:12)
+    at mod.require (/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/require-hook.js:65:28)
+    at require (node:internal/modules/helpers:135:16)
+    at requirePage (/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/require.js:109:84)
+    at /Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/load-components.js:74:84
+    at async loadComponentsImpl (/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/load-components.js:74:26)
+    at async DevServer.findPageComponentsImpl (/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/next-server.js:675:36) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/webpack-runtime.js',
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/.next/server/app/not-found.js',
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/require.js',
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/load-components.js',
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/build/utils.js',
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/dev/hot-middleware.js',
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/dev/hot-reloader-webpack.js',
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js',
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/lib/router-server.js',
+    '/Users/bernardadjei/HealthiClinic Builds/HealthiClinic_Dashboard_v3/node_modules/next/dist/server/lib/start-server.js'
+  ],
+  page: '/carousel2'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 637ms (2708 modules)
+ ✓ Compiled in 720ms (2722 modules)

@@ -53,43 +53,83 @@ export default function FullDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const { data: statsData, error: statsError } = await supabase
-        .from('doctor_stats_ytd')
-        .select('*')
-        .eq('year', currentYear)
+      // Fetch doctors and weekly appointments from actual tables
+      const [doctorsResponse, weeklyResponse, targetsResponse] = await Promise.all([
+        supabase
+          .from('doctors')
+          .select('*')
+          .eq('active', true),
+        supabase
+          .from('weekly_appointments')
+          .select('*')
+          .eq('year', currentYear),
+        supabase
+          .from('appointment_targets')
+          .select('*')
+          .eq('year', currentYear)
+      ])
 
-      const { data: trendsData, error: trendsError } = await supabase
-        .from('weekly_trends')
-        .select('*')
-        .eq('year', currentYear)
-        .order('week_number', { ascending: true })
+      if (doctorsResponse.error) console.error('Doctors error:', doctorsResponse.error)
+      if (weeklyResponse.error) console.error('Weekly appointments error:', weeklyResponse.error)
 
-      if (statsError) console.error('Stats error:', statsError)
-      if (trendsError) console.error('Trends error:', trendsError)
-
-      if (statsData) {
-        const cleanedStats = statsData.map(stat => ({
-          ...stat,
-          total_appointments: Number(stat.total_appointments) || 0,
-          weeks_worked: Number(stat.weeks_worked) || 0,
-          avg_appointments_per_week: Number(stat.avg_appointments_per_week) || 0,
-          max_weekly_appointments: Number(stat.max_weekly_appointments) || 0,
-          min_weekly_appointments: Number(stat.min_weekly_appointments) || 0,
-          target_completion_percentage: Number(stat.target_completion_percentage) || 0
-        }))
-        setDoctorStats(cleanedStats)
+      if (doctorsResponse.data) {
+        // Transform to match expected format
+        const transformedStats = doctorsResponse.data.map(doctor => {
+          const doctorWeekly = weeklyResponse.data?.filter(w => w.doctor_id === doctor.id) || []
+          const totalAppointments = doctorWeekly.reduce((sum, week) => sum + (week.appointment_count || 0), 0)
+          
+          const doctorTarget = targetsResponse.data?.find(t => t.doctor_id === doctor.id)
+          const weeklyTarget = doctor.weekly_target || doctorTarget?.weekly_target || 80
+          const yearlyTarget = doctorTarget?.yearly_target || (weeklyTarget * 52)
+          const weeksWorked = doctorWeekly.length || 1
+          
+          const weeklyAppointmentCounts = doctorWeekly.map(w => w.appointment_count || 0)
+          const maxWeekly = weeklyAppointmentCounts.length > 0 ? Math.max(...weeklyAppointmentCounts) : 0
+          const minWeekly = weeklyAppointmentCounts.length > 0 ? Math.min(...weeklyAppointmentCounts) : 0
+          
+          return {
+            id: doctor.id,
+            doctor_id: doctor.id,
+            doctor_name: `${doctor.title || 'Dr.'} ${doctor.first_name} ${doctor.last_name}`,
+            title: doctor.title || 'Dr.',
+            first_name: doctor.first_name,
+            last_name: doctor.last_name,
+            specialty: doctor.specialty || 'General Practice',
+            year: currentYear,
+            total_appointments: totalAppointments,
+            completed_appointments: 0,
+            cancelled_appointments: 0,
+            weeks_worked: weeksWorked,
+            avg_appointments_per_week: weeksWorked > 0 ? Math.round(totalAppointments / weeksWorked) : 0,
+            max_weekly_appointments: maxWeekly,
+            min_weekly_appointments: minWeekly,
+            weekly_target: weeklyTarget,
+            target_completion_percentage: yearlyTarget > 0 
+              ? Math.round((totalAppointments / yearlyTarget) * 100)
+              : 0,
+            created_at: doctor.created_at,
+            updated_at: doctor.updated_at
+          }
+        })
+        setDoctorStats(transformedStats)
       }
 
-      if (trendsData) {
-        const cleanedTrends = trendsData.map(trend => ({
-          ...trend,
-          week_number: Number(trend.week_number),
-          total_appointments: Number(trend.total_appointments) || 0,
-          active_doctors: Number(trend.active_doctors) || 0,
-          avg_appointments: Number(trend.avg_appointments) || 0
-        }))
-        setWeeklyTrends(cleanedTrends)
+      // Transform weekly data to trends
+      const weeklyTrendsData = []
+      for (let week = 1; week <= 52; week++) {
+        const weekData = weeklyResponse.data?.filter(w => w.week_number === week) || []
+        if (weekData.length > 0) {
+          weeklyTrendsData.push({
+            week_number: week,
+            year: currentYear,
+            total_appointments: weekData.reduce((sum, w) => sum + (w.appointment_count || 0), 0),
+            active_doctors: weekData.length,
+            avg_appointments: Math.round(weekData.reduce((sum, w) => sum + (w.appointment_count || 0), 0) / weekData.length)
+          })
+        }
       }
+      setWeeklyTrends(weeklyTrendsData)
+      
     } catch (error) {
       console.error('Error fetching data:', error)
     } finally {

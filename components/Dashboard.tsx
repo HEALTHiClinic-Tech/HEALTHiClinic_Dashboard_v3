@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabase, isConfigured } from "@/lib/supabase"
 import { DoctorStatsYTD, WeeklyTrend } from "@/types/database"
-import { Activity, TrendingUp, Users, Calendar, Target, Award } from "lucide-react"
+import { Activity, TrendingUp, Users, Calendar, Target, Award, ExternalLink } from "lucide-react"
+import { useRouter } from 'next/navigation'
 import SetupNotice from "@/components/SetupNotice"
 import {
   LineChart,
@@ -29,6 +30,7 @@ import { format, startOfYear, getWeek } from "date-fns"
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
 
 export default function Dashboard() {
+  const router = useRouter()
   const [doctorStats, setDoctorStats] = useState<DoctorStatsYTD[]>([])
   const [weeklyTrends, setWeeklyTrends] = useState<WeeklyTrend[]>([])
   const [loading, setLoading] = useState(true)
@@ -56,50 +58,92 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsResponse, trendsResponse] = await Promise.all([
+      const [doctorsResponse, weeklyResponse, targetsResponse] = await Promise.all([
         supabase
-          .from('doctor_stats_ytd')
+          .from('doctors')
+          .select('*')
+          .eq('active', true),
+        supabase
+          .from('weekly_appointments')
           .select('*')
           .eq('year', currentYear),
         supabase
-          .from('weekly_trends')
+          .from('appointment_targets')
           .select('*')
           .eq('year', currentYear)
-          .order('week_number', { ascending: true })
       ])
 
-      if (statsResponse.error) {
-        console.error('Error fetching doctor stats:', statsResponse.error)
+      if (doctorsResponse.error) {
+        console.error('Error fetching doctors:', doctorsResponse.error)
       }
-      if (trendsResponse.error) {
-        console.error('Error fetching weekly trends:', trendsResponse.error)
+      if (weeklyResponse.error) {
+        console.error('Error fetching weekly appointments:', weeklyResponse.error)
       }
 
-      if (statsResponse.data && statsResponse.data.length > 0) {
-        // Filter out entries with null values and ensure all numeric fields have defaults
-        const cleanedStats = statsResponse.data.map(stat => ({
-          ...stat,
-          total_appointments: Number(stat.total_appointments) || 0,
-          weeks_worked: Number(stat.weeks_worked) || 0,
-          avg_appointments_per_week: Number(stat.avg_appointments_per_week) || 0,
-          max_weekly_appointments: Number(stat.max_weekly_appointments) || 0,
-          min_weekly_appointments: Number(stat.min_weekly_appointments) || 0,
-          target_completion_percentage: Number(stat.target_completion_percentage) || 0
-        }))
-        setDoctorStats(cleanedStats)
+      if (doctorsResponse.data && doctorsResponse.data.length > 0) {
+        // Transform doctors data to match expected format
+        const transformedStats = doctorsResponse.data.map(doctor => {
+          // Get all weekly appointments for this doctor
+          const doctorWeekly = weeklyResponse.data?.filter(w => w.doctor_id === doctor.id) || []
+          
+          // Calculate total appointments for the year
+          const totalAppointments = doctorWeekly.reduce((sum, week) => sum + (week.appointment_count || 0), 0)
+          
+          // Get the doctor's target
+          const doctorTarget = targetsResponse.data?.find(t => t.doctor_id === doctor.id)
+          const weeklyTarget = doctor.weekly_target || doctorTarget?.weekly_target || 80
+          const yearlyTarget = doctorTarget?.yearly_target || (weeklyTarget * 52)
+          
+          // Calculate weeks worked (weeks with data)
+          const weeksWorked = doctorWeekly.length || 1
+          
+          // Find max and min weekly appointments
+          const weeklyAppointmentCounts = doctorWeekly.map(w => w.appointment_count || 0)
+          const maxWeekly = weeklyAppointmentCounts.length > 0 ? Math.max(...weeklyAppointmentCounts) : 0
+          const minWeekly = weeklyAppointmentCounts.length > 0 ? Math.min(...weeklyAppointmentCounts) : 0
+          
+          return {
+            id: doctor.id,
+            doctor_id: doctor.id,
+            doctor_name: `${doctor.title || 'Dr.'} ${doctor.first_name} ${doctor.last_name}`,
+            title: doctor.title || 'Dr.',
+            first_name: doctor.first_name,
+            last_name: doctor.last_name,
+            specialty: doctor.specialty || 'General Practice',
+            year: currentYear,
+            total_appointments: totalAppointments,
+            completed_appointments: 0, // Not tracked in current schema
+            cancelled_appointments: 0, // Not tracked in current schema
+            weeks_worked: weeksWorked,
+            avg_appointments_per_week: weeksWorked > 0 ? Math.round(totalAppointments / weeksWorked) : 0,
+            max_weekly_appointments: maxWeekly,
+            min_weekly_appointments: minWeekly,
+            target_completion_percentage: yearlyTarget > 0 
+              ? Math.round((totalAppointments / yearlyTarget) * 100)
+              : 0,
+            created_at: doctor.created_at,
+            updated_at: doctor.updated_at
+          }
+        })
+        setDoctorStats(transformedStats)
       }
       
-      if (trendsResponse.data && trendsResponse.data.length > 0) {
-        // Filter out entries with null values
-        const cleanedTrends = trendsResponse.data
-          .map(trend => ({
-            ...trend,
-            total_appointments: Number(trend.total_appointments) || 0,
-            active_doctors: Number(trend.active_doctors) || 0,
-            avg_appointments: Number(trend.avg_appointments) || 0
-          }))
-        setWeeklyTrends(cleanedTrends)
+      // Transform weekly data to trends
+      const weeklyTrendsData = []
+      for (let week = 1; week <= 52; week++) {
+        const weekData = weeklyResponse.data?.filter(w => w.week_number === week) || []
+        if (weekData.length > 0) {
+          weeklyTrendsData.push({
+            week_number: week,
+            year: currentYear,
+            total_appointments: weekData.reduce((sum, w) => sum + (w.appointment_count || 0), 0),
+            active_doctors: weekData.length,
+            avg_appointments: Math.round(weekData.reduce((sum, w) => sum + (w.appointment_count || 0), 0) / weekData.length)
+          })
+        }
       }
+      setWeeklyTrends(weeklyTrendsData)
+      
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
@@ -299,12 +343,18 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <motion.div
-                className="text-lg font-bold truncate"
+                className={`text-lg font-bold truncate ${topPerformer ? "cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center group" : ""}`}
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
+                onClick={() => topPerformer && router.push(`/doctor/${topPerformer.doctor_id}`)}
               >
-                {topPerformer ? `Dr. ${topPerformer.first_name} ${topPerformer.last_name}` : 'N/A'}
+                {topPerformer ? (
+                  <>
+                    Dr. {topPerformer.first_name} {topPerformer.last_name}
+                    <ExternalLink className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </>
+                ) : 'N/A'}
               </motion.div>
               <p className="text-xs text-muted-foreground mt-2">
                 {topPerformer?.total_appointments || 0} appointments
@@ -423,8 +473,14 @@ export default function Dashboard() {
                           transition={{ delay: index * 0.05 }}
                           className="border-b hover:bg-gray-50 transition-colors"
                         >
-                          <td className="py-3 px-4 font-medium">
-                            Dr. {doctor.first_name} {doctor.last_name}
+                          <td className="py-3 px-4">
+                            <span 
+                              className="font-medium cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center group"
+                              onClick={() => router.push(`/doctor/${doctor.doctor_id}`)}
+                            >
+                              Dr. {doctor.first_name} {doctor.last_name}
+                              <ExternalLink className="ml-2 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </span>
                           </td>
                           <td className="py-3 px-4">{doctor.specialty || 'N/A'}</td>
                           <td className="text-center py-3 px-4 font-semibold">

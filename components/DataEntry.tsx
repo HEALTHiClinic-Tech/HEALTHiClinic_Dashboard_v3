@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabase, isConfigured } from "@/lib/supabase"
 import { Doctor, WeeklyAppointment } from "@/types/database"
-import { Save, Plus, UserPlus, Calendar, Hash, Check, X, AlertCircle, User, Target } from "lucide-react"
+import { Save, Plus, UserPlus, Calendar, Hash, Check, X, AlertCircle, User, Target, ExternalLink } from "lucide-react"
 import { format, getWeek, getYear, startOfWeek } from "date-fns"
 import SetupNotice from "@/components/SetupNotice"
 import WeekCalendarPicker from "./WeekCalendarPicker"
@@ -13,8 +13,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { useRouter } from 'next/navigation'
 
 export default function DataEntry() {
+  const router = useRouter()
   if (!isConfigured()) {
     return <SetupNotice />
   }
@@ -294,8 +296,12 @@ export default function DataEntry() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
                             <User className="h-4 w-4 text-gray-500" />
-                            <span className="font-medium">
+                            <span 
+                              className="font-medium cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center group"
+                              onClick={() => router.push(`/doctor/${doctor.id}`)}
+                            >
                               {doctor.title || 'Dr.'} {doctor.first_name} {doctor.last_name}
+                              <ExternalLink className="ml-2 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </span>
                           </div>
                           {existing && (
@@ -534,8 +540,15 @@ export default function DataEntry() {
                         transition={{ delay: index * 0.05 }}
                         className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                       >
-                        <div className="font-medium">
+                        <div 
+                          className="font-medium cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center group"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/doctor/${doctor.id}`);
+                          }}
+                        >
                           {doctor.title || 'Dr.'} {doctor.first_name} {doctor.last_name}
+                          <ExternalLink className="ml-2 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                         <div className="text-sm text-gray-600">
                           {doctor.specialty || 'General Practice'}
