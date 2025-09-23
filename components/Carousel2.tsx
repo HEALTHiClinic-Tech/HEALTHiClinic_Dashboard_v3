@@ -27,7 +27,7 @@ export default function Carousel2() {
 
   useEffect(() => {
     if (!isConfigured()) {
-      console.error('Supabase not configured')
+      // Supabase not configured
       setError('Database configuration missing')
       setLoading(false)
       return
@@ -64,10 +64,10 @@ export default function Carousel2() {
 
   const fetchDoctorStats = async () => {
     try {
-      console.log('Starting fetchDoctorStats...')
+      // Starting fetchDoctorStats...
       const currentYear = new Date().getFullYear()
       const currentWeek = getWeek(new Date(), { weekStartsOn: 1 })
-      console.log('Current Year:', currentYear, 'Current Week:', currentWeek)
+      // Current Year and Week calculated
       
       // Fetch doctors and their weekly appointments
       const { data: doctorsData, error: doctorsError } = await supabase
@@ -86,15 +86,15 @@ export default function Carousel2() {
         .eq('year', currentYear)
 
       if (doctorsError) {
-        console.error('Error fetching doctors:', doctorsError)
+        // Error fetching doctors
         throw doctorsError
       }
       if (weeklyError) {
-        console.error('Error fetching weekly data:', weeklyError)
+        // Error fetching weekly data
         throw weeklyError
       }
       
-      console.log('Doctors data:', doctorsData?.length, 'Weekly data:', weeklyData?.length)
+      // Data fetched from Supabase
       
       if (doctorsData && doctorsData.length > 0) {
         // Transform to match expected format
@@ -136,13 +136,13 @@ export default function Carousel2() {
           }
         }).sort((a, b) => b.total_appointments - a.total_appointments)
         
-        console.log('Doctor statistics calculated:', transformedData)
+        // Doctor statistics calculated
         setDoctors(transformedData)
       } else {
         setError('No doctor data available')
       }
     } catch (error) {
-      console.error('Error:', error)
+      // Error in fetchDoctorStats
       setError(error instanceof Error ? error.message : 'Failed to load data')
     } finally {
       setLoading(false)
@@ -162,7 +162,7 @@ export default function Carousel2() {
       if (error) throw error
 
       if (data && data.length > 0) {
-        console.log('Raw weekly data from Supabase:', data)
+        // Processing raw weekly data from Supabase
         let formattedData: ChartDataPoint[] = []
         
         const currentDate = new Date()
@@ -368,14 +368,14 @@ export default function Carousel2() {
             break
         }
         
-        console.log('Formatted chart data:', formattedData)
+        // Chart data formatted
         setChartData(formattedData)
       } else {
-        console.log('No data returned from Supabase')
+        // No data returned from Supabase
         setChartData([])
       }
     } catch (error) {
-      console.error('Error fetching chart data:', error)
+      // Error fetching chart data
       setChartData([])
     }
   }
@@ -393,13 +393,13 @@ export default function Carousel2() {
       carouselRef.current.requestFullscreen().then(() => {
         setIsFullscreen(true)
       }).catch((err) => {
-        console.error('Error attempting to enable fullscreen:', err)
+        // Error attempting to enable fullscreen
       })
     } else if (document.fullscreenElement) {
       document.exitFullscreen().then(() => {
         setIsFullscreen(false)
       }).catch((err) => {
-        console.error('Error attempting to exit fullscreen:', err)
+        // Error attempting to exit fullscreen
       })
     }
   }
@@ -482,15 +482,7 @@ export default function Carousel2() {
   const average = chartData.length > 0
     ? Math.round(chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length)
     : 0
-  
-  // Log for debugging
-  console.log('Chart Stats:', {
-    bestWeek,
-    currentPeriod,
-    average,
-    chartDataLength: chartData.length,
-    timeInterval
-  })
+  // Chart stats calculated
 
   return (
     <div ref={carouselRef} className={`min-h-screen bg-gradient-to-br ${currentGradient} transition-all duration-1500 ease-in-out relative overflow-auto`}>
