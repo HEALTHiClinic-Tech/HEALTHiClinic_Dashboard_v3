@@ -311,7 +311,7 @@ export default function FullDashboard() {
                 <Award className="h-4 w-4 text-amber-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-lg font-bold truncate">
+                <div className="text-lg font-bold break-words">
                   {topPerformer ? `${topPerformer.title || 'Dr.'} ${topPerformer.first_name} ${topPerformer.last_name}` : 'N/A'}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
@@ -371,14 +371,16 @@ export default function FullDashboard() {
                 <CardDescription>Total appointments by doctor</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={doctorStats.slice(0, 8)}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
-                      dataKey="last_name" 
+                      dataKey="doctor_name" 
                       angle={-45}
                       textAnchor="end"
-                      height={70}
+                      height={100}
+                      interval={0}
+                      tick={{ fontSize: 11 }}
                     />
                     <YAxis />
                     <Tooltip />

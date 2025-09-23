@@ -343,7 +343,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <motion.div
-                className={`text-lg font-bold truncate ${topPerformer ? "cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center group" : ""}`}
+                className={`text-lg font-bold ${topPerformer ? "cursor-pointer hover:text-blue-600 transition-colors flex items-center group" : ""}`}
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -351,8 +351,8 @@ export default function Dashboard() {
               >
                 {topPerformer ? (
                   <>
-                    Dr. {topPerformer.first_name} {topPerformer.last_name}
-                    <ExternalLink className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="break-words">Dr. {topPerformer.first_name} {topPerformer.last_name}</span>
+                    <ExternalLink className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                   </>
                 ) : 'N/A'}
               </motion.div>
@@ -411,14 +411,16 @@ export default function Dashboard() {
                 <CardDescription>Total appointments by doctor</CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={280}>
                   <BarChart data={doctorStats.slice(0, 8)}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
-                      dataKey="last_name" 
+                      dataKey="doctor_name" 
                       angle={-45}
                       textAnchor="end"
-                      height={70}
+                      height={100}
+                      interval={0}
+                      tick={{ fontSize: 11 }}
                     />
                     <YAxis />
                     <Tooltip 
