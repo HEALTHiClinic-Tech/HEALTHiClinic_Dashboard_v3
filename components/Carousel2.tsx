@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { supabase } from "@/lib/supabase"
+import { supabase, isConfigured } from "@/lib/supabase"
 import { DoctorStatsYTD } from "@/types/database"
-import { ChevronLeft, ChevronRight, Play, Pause, Activity, TrendingUp, Target, Trophy, Calendar, Sparkles, Maximize, Minimize } from "lucide-react"
-import React from "react"
-import { getWeek, startOfWeek, addWeeks, format } from "date-fns"
+import { Pause, Play, ChevronLeft, ChevronRight, Sparkles, Trophy, Target, TrendingUp, TrendingDown, Calendar, Activity, Minimize, Maximize } from "lucide-react"
+import { startOfWeek, addWeeks, format, getWeek, getYear, startOfYear, addDays } from "date-fns"
 
 type TimeInterval = 'weekly' | 'monthly' | '3-monthly' | '6-monthly' | 'ytd' | 'all-time'
 
@@ -27,6 +26,12 @@ export default function Carousel2() {
   const carouselRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (!isConfigured()) {
+      console.error('Supabase not configured')
+      setError('Database configuration missing')
+      setLoading(false)
+      return
+    }
     fetchDoctorStats()
   }, [])
   
@@ -59,8 +64,10 @@ export default function Carousel2() {
 
   const fetchDoctorStats = async () => {
     try {
+      console.log('Starting fetchDoctorStats...')
       const currentYear = new Date().getFullYear()
-      const currentWeek = Math.ceil((new Date().getTime() - new Date(currentYear, 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))
+      const currentWeek = getWeek(new Date(), { weekStartsOn: 1 })
+      console.log('Current Year:', currentYear, 'Current Week:', currentWeek)
       
       // Fetch doctors and their weekly appointments
       const { data: doctorsData, error: doctorsError } = await supabase
@@ -78,8 +85,16 @@ export default function Carousel2() {
         .select('*')
         .eq('year', currentYear)
 
-      if (doctorsError) throw doctorsError
-      if (weeklyError) throw weeklyError
+      if (doctorsError) {
+        console.error('Error fetching doctors:', doctorsError)
+        throw doctorsError
+      }
+      if (weeklyError) {
+        console.error('Error fetching weekly data:', weeklyError)
+        throw weeklyError
+      }
+      
+      console.log('Doctors data:', doctorsData?.length, 'Weekly data:', weeklyData?.length)
       
       if (doctorsData && doctorsData.length > 0) {
         // Transform to match expected format
@@ -92,11 +107,15 @@ export default function Carousel2() {
           
           // Get the doctor's target
           const doctorTarget = targetsData?.find(t => t.doctor_id === doctor.id)
-          const weeklyTarget = doctor.weekly_target || doctorTarget?.weekly_target || 80
-          const yearlyTarget = doctorTarget?.yearly_target || (weeklyTarget * 52)
+          const weeklyTarget = doctor.weekly_target || doctorTarget?.weekly_target || 40
           
-          // Calculate weeks worked (weeks with data)
-          const weeksWorked = doctorWeekly.length || 1
+          // Calculate weeks worked - count only weeks with actual appointments > 0
+          const weeksWithAppointments = doctorWeekly.filter(w => w.appointment_count > 0).length
+          const weeksWorked = weeksWithAppointments || doctorWeekly.length || 1
+          
+          // Calculate the actual year progress for YTD target
+          const yearlyTarget = weeklyTarget * currentWeek // Use current week for more accurate progress
+          const targetCompletionPercentage = yearlyTarget > 0 ? Math.round((totalAppointments / yearlyTarget) * 100) : 0
           
           return {
             doctor_id: doctor.id,
@@ -110,12 +129,14 @@ export default function Carousel2() {
             weekly_target: weeklyTarget,
             avg_appointments_per_week: weeksWorked > 0 ? Math.round(totalAppointments / weeksWorked) : 0,
             weeks_worked: weeksWorked,
-            target_completion_percentage: yearlyTarget > 0 ? Math.round((totalAppointments / yearlyTarget) * 100) : 0,
+            target_completion_percentage: targetCompletionPercentage,
             max_weekly_appointments: Math.max(...doctorWeekly.map(w => w.appointment_count || 0), 0),
-            min_weekly_appointments: Math.min(...doctorWeekly.map(w => w.appointment_count || 0), 0)
+            min_weekly_appointments: Math.min(...doctorWeekly.map(w => w.appointment_count || 0), 0),
+            current_week_appointments: doctorWeekly.find(w => w.week_number === currentWeek)?.appointment_count || 0
           }
         }).sort((a, b) => b.total_appointments - a.total_appointments)
         
+        console.log('Doctor statistics calculated:', transformedData)
         setDoctors(transformedData)
       } else {
         setError('No doctor data available')
@@ -151,33 +172,79 @@ export default function Carousel2() {
         
         // Helper function to get Monday date for a week number
         const getMondayDate = (year: number, weekNumber: number) => {
-          const jan1 = new Date(year, 0, 1)
-          const firstWeekMonday = startOfWeek(jan1, { weekStartsOn: 1 })
-          const targetMonday = addWeeks(firstWeekMonday, weekNumber - 1)
+          // Use ISO week calculation to get the correct Monday
+          const jan4 = new Date(year, 0, 4) // January 4th is always in week 1 ISO
+          const weekOne = startOfWeek(jan4, { weekStartsOn: 1 })
+          const targetMonday = addWeeks(weekOne, weekNumber - 1)
           return format(targetMonday, 'MMM d')
         }
         
+        // Helper function to get the actual date for a week number (ISO 8601 week)
+        const getDateForWeekNumber = (year: number, weekNumber: number) => {
+          // January 4th is always in week 1 (ISO 8601)
+          const jan4 = new Date(year, 0, 4)
+          // Get the Monday of week 1
+          const weekOne = startOfWeek(jan4, { weekStartsOn: 1 })
+          // Add the appropriate number of weeks
+          const targetDate = addWeeks(weekOne, weekNumber - 1)
+          return targetDate
+        }
+        
+        // Define month names once for all cases
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+        
         switch (interval) {
           case 'weekly':
-            // Show weekly data for current year
-            const yearData = data.filter(w => w.year === currentYear)
-            formattedData = yearData.map(w => ({
-              label: getMondayDate(currentYear, w.week_number),
-              value: Number(w.appointment_count) || 0
-            }))
-            // Show last 12 weeks for better visibility
-            if (formattedData.length > 12) {
-              formattedData = formattedData.slice(-12)
+            // Show weekly data for current year up to current week only
+            // Create a map of existing data for quick lookup
+            const weekDataMap = new Map()
+            data.forEach(w => {
+              if (w.year === currentYear && w.week_number <= currentWeek) {
+                weekDataMap.set(w.week_number, Number(w.appointment_count) || 0)
+              }
+            })
+            
+            // Determine the range of weeks to show (last 12 weeks or from week 1)
+            const startWeek = Math.max(1, currentWeek - 11)
+            const endWeek = currentWeek
+            
+            // Create continuous data with zeros for missing weeks
+            formattedData = []
+            for (let week = startWeek; week <= endWeek; week++) {
+              formattedData.push({
+                label: getMondayDate(currentYear, week),
+                value: weekDataMap.get(week) || 0
+              })
             }
             break
             
           case 'monthly':
-            // Show last 4 weeks
-            const last4Weeks = data.filter(w => w.year === currentYear).slice(-4)
-            formattedData = last4Weeks.map(w => ({
-              label: getMondayDate(w.year, w.week_number),
-              value: Number(w.appointment_count) || 0
-            }))
+            // Aggregate data by month for the current year
+            const monthlyDataMonthly: { [key: string]: number } = {}
+            
+            // Process all weeks up to current week and aggregate by month
+            data.forEach(w => {
+              if (w.year === currentYear && w.week_number <= currentWeek) {
+                // Calculate which month this week belongs to using accurate date calculation
+                const weekDate = getDateForWeekNumber(w.year, w.week_number)
+                const monthIndex = weekDate.getMonth()
+                const monthKey = String(monthIndex + 1).padStart(2, '0')
+                
+                if (!monthlyDataMonthly[monthKey]) monthlyDataMonthly[monthKey] = 0
+                monthlyDataMonthly[monthKey] += Number(w.appointment_count) || 0
+              }
+            })
+            
+            // Convert to array and sort by month
+            formattedData = Object.entries(monthlyDataMonthly)
+              .sort((a, b) => a[0].localeCompare(b[0]))
+              .map(([key, value]) => ({
+                label: monthNames[parseInt(key) - 1],
+                value: value
+              }))
+            
+            // Show only months with data, up to current month
+            formattedData = formattedData.filter(d => d.value > 0)
             break
             
           case '3-monthly':
@@ -186,16 +253,19 @@ export default function Carousel2() {
             const threeMonthsAgo = currentMonth - 2
             
             data.forEach(w => {
-              const monthFromWeek = Math.ceil(w.week_number / 4.33)
-              const monthKey = `${w.year}-${String(monthFromWeek).padStart(2, '0')}`
-              
-              if (w.year === currentYear && monthFromWeek >= threeMonthsAgo && monthFromWeek <= currentMonth) {
-                if (!monthlyData3[monthKey]) monthlyData3[monthKey] = 0
-                monthlyData3[monthKey] += Number(w.appointment_count) || 0
+              // Only include weeks up to current week
+              if (w.year === currentYear && w.week_number <= currentWeek) {
+                const weekDate = getDateForWeekNumber(w.year, w.week_number)
+                const monthFromWeek = weekDate.getMonth() + 1
+                const monthKey = `${w.year}-${String(monthFromWeek).padStart(2, '0')}`
+                
+                if (monthFromWeek >= threeMonthsAgo && monthFromWeek <= currentMonth) {
+                  if (!monthlyData3[monthKey]) monthlyData3[monthKey] = 0
+                  monthlyData3[monthKey] += Number(w.appointment_count) || 0
+                }
               }
             })
             
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
             formattedData = Object.entries(monthlyData3)
               .sort((a, b) => a[0].localeCompare(b[0]))
               .map(([key, value]) => {
@@ -213,23 +283,26 @@ export default function Carousel2() {
             const sixMonthsAgo = currentMonth - 5
             
             data.forEach(w => {
-              const monthFromWeek = Math.ceil(w.week_number / 4.33)
-              
-              if (w.year === currentYear && monthFromWeek >= Math.max(1, sixMonthsAgo) && monthFromWeek <= currentMonth) {
-                const monthKey = `${w.year}-${String(monthFromWeek).padStart(2, '0')}`
-                if (!monthlyData6[monthKey]) monthlyData6[monthKey] = 0
-                monthlyData6[monthKey] += Number(w.appointment_count) || 0
+              // Only include weeks up to current week
+              if (w.year === currentYear && w.week_number <= currentWeek) {
+                const weekDate = getDateForWeekNumber(w.year, w.week_number)
+                const monthFromWeek = weekDate.getMonth() + 1
+                
+                if (monthFromWeek >= Math.max(1, sixMonthsAgo) && monthFromWeek <= currentMonth) {
+                  const monthKey = `${w.year}-${String(monthFromWeek).padStart(2, '0')}`
+                  if (!monthlyData6[monthKey]) monthlyData6[monthKey] = 0
+                  monthlyData6[monthKey] += Number(w.appointment_count) || 0
+                }
               }
             })
             
-            const monthNames6 = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
             formattedData = Object.entries(monthlyData6)
               .sort((a, b) => a[0].localeCompare(b[0]))
               .slice(-6)
               .map(([key, value]) => {
                 const month = parseInt(key.split('-')[1]) - 1
                 return {
-                  label: monthNames6[month],
+                  label: monthNames[month],
                   value: value
                 }
               })
@@ -240,8 +313,9 @@ export default function Carousel2() {
             const monthlyDataYTD: { [key: string]: number } = {}
             
             data.forEach(w => {
-              if (w.year === currentYear) {
-                const monthFromWeek = Math.ceil(w.week_number / 4.33)
+              if (w.year === currentYear && w.week_number <= currentWeek) {
+                const weekDate = getDateForWeekNumber(w.year, w.week_number)
+                const monthFromWeek = weekDate.getMonth() + 1
                 if (monthFromWeek <= currentMonth) {
                   const monthKey = String(monthFromWeek).padStart(2, '0')
                   if (!monthlyDataYTD[monthKey]) monthlyDataYTD[monthKey] = 0
@@ -250,38 +324,47 @@ export default function Carousel2() {
               }
             })
             
-            const monthNamesYTD = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
             formattedData = Object.entries(monthlyDataYTD)
               .sort((a, b) => a[0].localeCompare(b[0]))
               .map(([key, value]) => ({
-                label: monthNamesYTD[parseInt(key) - 1],
+                label: monthNames[parseInt(key) - 1],
                 value: value
               }))
             break
             
           case 'all-time':
-            // All time - aggregate all data by month
+            // All time - aggregate all data by month up to current week
             const monthlyDataAll: { [key: string]: number } = {}
             
             data.forEach(w => {
-              const monthFromWeek = Math.ceil(w.week_number / 4.33)
-              const monthKey = `${w.year}-${String(monthFromWeek).padStart(2, '0')}`
-              if (!monthlyDataAll[monthKey]) monthlyDataAll[monthKey] = 0
-              monthlyDataAll[monthKey] += Number(w.appointment_count) || 0
+              // Include all past years and current year up to current week
+              if (w.year < currentYear || (w.year === currentYear && w.week_number <= currentWeek)) {
+                const weekDate = getDateForWeekNumber(w.year, w.week_number)
+                const monthFromWeek = weekDate.getMonth() + 1
+                const monthKey = `${w.year}-${String(monthFromWeek).padStart(2, '0')}`
+                if (!monthlyDataAll[monthKey]) monthlyDataAll[monthKey] = 0
+                monthlyDataAll[monthKey] += Number(w.appointment_count) || 0
+              }
             })
             
-            const monthNamesAll = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-            formattedData = Object.entries(monthlyDataAll)
+            // Sort and limit to last 12 months for better visibility
+            const sortedEntries = Object.entries(monthlyDataAll)
               .sort((a, b) => a[0].localeCompare(b[0]))
-              .map(([key, value]) => {
-                const [year, month] = key.split('-')
-                const monthIndex = parseInt(month) - 1
-                const shortYear = year.slice(2)
-                return {
-                  label: `${monthNamesAll[monthIndex]}'${shortYear}`,
-                  value: value
-                }
-              })
+            
+            // Take last 12 months if more than 12 months of data
+            const entriesToShow = sortedEntries.length > 12 ? sortedEntries.slice(-12) : sortedEntries
+            
+            formattedData = entriesToShow.map(([key, value]) => {
+              const [year, month] = key.split('-')
+              const monthIndex = parseInt(month) - 1
+              const shortYear = year.slice(2)
+              // Use short format for better display
+              return {
+                label: `${monthNames[monthIndex]}'${shortYear}`,
+                value: value,
+                date: key
+              }
+            })
             break
         }
         
@@ -372,42 +455,42 @@ export default function Carousel2() {
   const currentDoctor = doctors[currentIndex]
   const ranking = currentIndex + 1
 
-  // Doctor-specific gradients
+  // Doctor gradients based on index for consistency
   const getDoctorGradient = () => {
-    const doctorName = `${currentDoctor.first_name} ${currentDoctor.last_name}`.toLowerCase()
+    const doctorGradients = [
+      'from-red-900 via-red-700 to-rose-600',           // Index 0 - Red/Rose
+      'from-purple-900 via-violet-700 to-fuchsia-600',  // Index 1 - Purple/Violet
+      'from-emerald-900 via-green-700 to-lime-600',     // Index 2 - Green/Emerald
+      'from-amber-900 via-orange-700 to-yellow-500',    // Index 3 - Sunset Orange
+      'from-indigo-900 via-blue-800 to-sky-600',        // Index 4 - Deep Blue
+      'from-teal-900 via-cyan-700 to-teal-500',         // Index 5 - Teal/Cyan
+      'from-pink-900 via-rose-700 to-pink-500',         // Index 6 - Pink/Rose
+      'from-gray-900 via-slate-700 to-gray-600',        // Index 7 - Slate/Gray
+    ]
     
-    const doctorGradients: { [key: string]: string } = {
-      // Dr. Joseph Grace - Deep crimson red gradient (like the reference)
-      'joseph grace': 'from-red-900 via-red-700 to-rose-600',
-      
-      // Dr. Hamid Hajian - Ocean blue gradient
-      'hamid hajian': 'from-blue-900 via-blue-700 to-cyan-500',
-      
-      // Additional doctor gradients - using index-based assignment
-      'default0': 'from-red-900 via-red-700 to-rose-600',           // Same as Joseph Grace for index 0
-      'default1': 'from-purple-900 via-violet-700 to-fuchsia-600',  // Purple/Violet
-      'default2': 'from-emerald-900 via-green-700 to-lime-600',     // Green/Emerald
-      'default3': 'from-amber-900 via-orange-700 to-yellow-500',    // Sunset Orange
-      'default4': 'from-indigo-900 via-blue-800 to-sky-600',        // Deep Blue
-      'default5': 'from-teal-900 via-cyan-700 to-teal-500',         // Teal/Cyan
-      'default6': 'from-pink-900 via-rose-700 to-pink-500',         // Pink/Rose
-      'default7': 'from-gray-900 via-slate-700 to-gray-600',        // Slate/Gray
-    }
-    
-    // First check for exact name match, then fall back to index-based gradient
-    return doctorGradients[doctorName] || doctorGradients[`default${currentIndex % 8}`]
+    // Use modulo to cycle through gradients if more than 8 doctors
+    return doctorGradients[currentIndex % doctorGradients.length]
   }
   
   const currentGradient = getDoctorGradient()
 
-  // Calculate stats
+  // Calculate stats from actual chart data
   const bestWeek = chartData.length > 0 
     ? chartData.reduce((best, current) => current.value > best.value ? current : best, chartData[0])
     : null
-  const currentPeriod = chartData[chartData.length - 1]
+  const currentPeriod = chartData[chartData.length - 1] || null
   const average = chartData.length > 0
     ? Math.round(chartData.reduce((sum, d) => sum + d.value, 0) / chartData.length)
     : 0
+  
+  // Log for debugging
+  console.log('Chart Stats:', {
+    bestWeek,
+    currentPeriod,
+    average,
+    chartDataLength: chartData.length,
+    timeInterval
+  })
 
   return (
     <div ref={carouselRef} className={`min-h-screen bg-gradient-to-br ${currentGradient} transition-all duration-1500 ease-in-out relative overflow-auto`}>
@@ -593,15 +676,20 @@ export default function Carousel2() {
                   <Target className="w-6 h-6 text-white/60" />
                 </div>
                 <div className="text-4xl font-black text-white mb-2">
-                  {currentDoctor.target_completion_percentage || 26.8}%
+                  {currentDoctor.target_completion_percentage || 0}%
                 </div>
                 <div className="w-full bg-white/20 rounded-full h-4 overflow-hidden">
                   <div
                     className="h-full bg-gradient-to-r from-cyan-400 to-teal-400 rounded-full transition-all duration-1000 ease-out shadow-[0_0_20px_rgba(34,211,238,0.5)]"
-                    style={{ width: `${currentDoctor.target_completion_percentage || 26.8}%` }}
+                    style={{ width: `${Math.min(currentDoctor.target_completion_percentage || 0, 100)}%` }}
                   />
                 </div>
-                <p className="text-white/60 text-base font-medium mt-3">Goal: {(currentDoctor.weekly_target || 40) * currentDoctor.weeks_worked}</p>
+                <p className="text-white/60 text-base font-medium mt-3">
+                  Goal: {(() => {
+                    const currentWeek = getWeek(new Date(), { weekStartsOn: 1 })
+                    return (currentDoctor.weekly_target || 40) * currentWeek
+                  })()} ({getWeek(new Date(), { weekStartsOn: 1 })} weeks × {currentDoctor.weekly_target || 40})
+                </p>
               </div>
               
               <div className="bg-white/5 rounded-2xl p-4 hover:bg-white/10 transition-all">
@@ -675,8 +763,11 @@ export default function Carousel2() {
                           </div>
                           
                           {/* X-axis label */}
-                          <div className="absolute -bottom-6 text-white/60 text-xs font-medium">
-                            {point.label}
+                          <div className="absolute -bottom-6 text-white/60 text-xs font-medium whitespace-nowrap">
+                            {/* Truncate long labels for all-time view */}
+                            {timeInterval === 'all-time' && point.label.length > 7 
+                              ? point.label.substring(0, 3) + ' ' + point.label.split(' ')[1]?.substring(2)
+                              : point.label}
                           </div>
                         </div>
                       )
@@ -714,23 +805,23 @@ export default function Carousel2() {
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center hover:bg-white/15 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] group">
                 <div className="text-white/80 text-sm font-semibold tracking-wide uppercase mb-1">Best Week</div>
-                <div className="text-white text-lg font-bold mb-2">{bestWeek?.label || 'Week 31'}</div>
+                <div className="text-white text-lg font-bold mb-2">{bestWeek?.label || '-'}</div>
                 <div className="text-4xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] group-hover:animate-pulse">
-                  {bestWeek?.value || 24}
+                  {bestWeek?.value || 0}
                 </div>
                 <div className="mt-3 pt-3 border-t border-white/20">
                   <div className="text-xs text-white/60 uppercase tracking-wider mb-1">vs Target</div>
-                  <div className="text-lg font-bold text-green-400">
-                    {bestWeek ? `${Math.round((bestWeek.value / (currentDoctor.weekly_target || 40)) * 100)}%` : '60%'}
+                  <div className={`text-lg font-bold ${bestWeek && bestWeek.value >= (currentDoctor.weekly_target || 40) ? 'text-green-400' : 'text-yellow-400'}`}>
+                    {bestWeek ? `${Math.round((bestWeek.value / (currentDoctor.weekly_target || 40)) * 100)}%` : '0%'}
                   </div>
                 </div>
               </div>
               
               <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center hover:bg-white/15 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] group">
                 <div className="text-white/80 text-sm font-semibold tracking-wide uppercase mb-1">Current Period</div>
-                <div className="text-white text-lg font-bold mb-2">{currentPeriod?.label || 'Week 34'}</div>
+                <div className="text-white text-lg font-bold mb-2">{currentPeriod?.label || '-'}</div>
                 <div className="text-4xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] group-hover:animate-pulse">
-                  {currentPeriod?.value || 12}
+                  {currentPeriod?.value || 0}
                 </div>
                 <div className="mt-3 pt-3 border-t border-white/20">
                   <div className="text-xs text-white/60 uppercase tracking-wider mb-1">Trend</div>
@@ -760,15 +851,15 @@ export default function Carousel2() {
               
               <div className="bg-white/10 backdrop-blur rounded-2xl p-4 text-center hover:bg-white/15 transition-all shadow-[0_0_20px_rgba(255,255,255,0.1)] hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] group">
                 <div className="text-white/80 text-sm font-semibold tracking-wide uppercase mb-1">Weekly Average</div>
-                <div className="text-white text-lg font-bold mb-2">Across {currentDoctor.weeks_worked} weeks</div>
+                <div className="text-white text-lg font-bold mb-2">Across {currentDoctor.weeks_worked || 0} weeks</div>
                 <div className="text-4xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] group-hover:animate-pulse">
-                  {average || 10}
+                  {average}
                 </div>
                 <div className="mt-3 pt-3 border-t border-white/20">
                   <div className="text-xs text-white/60 uppercase tracking-wider mb-1">Performance</div>
                   <div className="text-lg font-bold">
                     {average >= (currentDoctor.weekly_target || 40) ? (
-                      <span className="text-green-400">On Target 🎯</span>
+                      <span className="text-green-400">Above Target</span>
                     ) : average >= (currentDoctor.weekly_target || 40) * 0.8 ? (
                       <span className="text-yellow-400">Near Target</span>
                     ) : (

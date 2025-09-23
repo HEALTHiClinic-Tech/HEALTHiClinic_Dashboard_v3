@@ -5,8 +5,8 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { supabase, isConfigured } from "@/lib/supabase"
 import { Doctor, WeeklyAppointment } from "@/types/database"
-import { Save, Plus, UserPlus, Calendar, Hash, Check, X, AlertCircle, User, Target, ExternalLink } from "lucide-react"
-import { format, getWeek, getYear, startOfWeek } from "date-fns"
+import { Save, Plus, UserPlus, Calendar, Hash, Check, X, AlertCircle, User, Target, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react"
+import { format, getWeek, getYear, startOfWeek, addWeeks, subWeeks } from "date-fns"
 import SetupNotice from "@/components/SetupNotice"
 import WeekCalendarPicker from "./WeekCalendarPicker"
 import { Button } from "@/components/ui/button"
@@ -238,23 +238,69 @@ export default function DataEntry() {
           <CardContent className="space-y-6">
             {/* Week Selection */}
             <div className="space-y-4">
-              <Label>Select Week</Label>
+              <div className="flex items-center justify-between">
+                <Label>Select Week</Label>
+                {/* Jump to Current Week Button */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedWeek(startOfWeek(new Date(), { weekStartsOn: 1 }))}
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                >
+                  <Calendar className="h-4 w-4 mr-1" />
+                  Go to Current Week
+                </Button>
+              </div>
               
-              {/* Current Selection Display */}
-              <Card className="p-4 bg-blue-50 border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
-                    onClick={() => setShowCalendar(!showCalendar)}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-lg font-semibold text-blue-900">
-                      Week {getWeek(selectedWeek, { weekStartsOn: 1 })} of {getYear(selectedWeek)}
-                    </p>
-                    <p className="text-sm text-blue-700">
-                      {format(selectedWeek, 'EEEE, MMMM d')} - {format(new Date(selectedWeek.getTime() + 6 * 24 * 60 * 60 * 1000), 'EEEE, MMMM d, yyyy')}
-                    </p>
+              {/* Current Selection Display with Navigation Arrows */}
+              <div className="flex items-center gap-2">
+                {/* Previous Week Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={(e) => {
+                    const weeksToMove = e.shiftKey ? 4 : 1
+                    setSelectedWeek(subWeeks(selectedWeek, weeksToMove))
+                  }}
+                  className="hover:bg-blue-100"
+                  title="Previous Week (hold Shift for 4 weeks)"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+
+                {/* Current Week Display */}
+                <Card className="flex-1 p-4 bg-blue-50 border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors"
+                      onClick={() => setShowCalendar(!showCalendar)}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-lg font-semibold text-blue-900">
+                        Week {getWeek(selectedWeek, { weekStartsOn: 1 })} of {getYear(selectedWeek)}
+                      </p>
+                      <p className="text-sm text-blue-700">
+                        {format(selectedWeek, 'EEEE, MMMM d')} - {format(new Date(selectedWeek.getTime() + 6 * 24 * 60 * 60 * 1000), 'EEEE, MMMM d, yyyy')}
+                      </p>
+                    </div>
+                    <Calendar className="h-6 w-6 text-blue-600" />
                   </div>
-                  <Calendar className="h-6 w-6 text-blue-600" />
-                </div>
-              </Card>
+                </Card>
+
+                {/* Next Week Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={(e) => {
+                    const weeksToMove = e.shiftKey ? 4 : 1
+                    setSelectedWeek(addWeeks(selectedWeek, weeksToMove))
+                  }}
+                  className="hover:bg-blue-100"
+                  title="Next Week (hold Shift for 4 weeks)"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
 
               {/* Calendar Picker */}
               {showCalendar && (
