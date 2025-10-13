@@ -51,7 +51,7 @@ export default function Carousel2() {
     if (doctors.length > 0 && isPlaying) {
       const interval = setInterval(() => {
         setCurrentIndex((prev) => (prev + 1) % doctors.length)
-      }, 3000) // Changed from 5000ms to 3000ms (3 seconds)
+      }, 20000) // 20 seconds per slide
       return () => clearInterval(interval)
     }
   }, [doctors.length, isPlaying])
