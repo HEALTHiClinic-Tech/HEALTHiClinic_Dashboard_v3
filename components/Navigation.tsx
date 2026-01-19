@@ -4,16 +4,17 @@ import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { LayoutDashboard, Settings, Database, Presentation } from "lucide-react"
+import { LayoutDashboard, Database, Presentation, DollarSign, BarChart3 } from "lucide-react"
 
 export default function Navigation() {
   const pathname = usePathname()
 
   const links = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/comparisons", label: "Comparisons", icon: BarChart3 },
     { href: "/admin", label: "Data Entry", icon: Database },
-    { href: "/carousel", label: "Carousel", icon: Presentation },
-    { href: "/carousel2", label: "Carousel 2", icon: Presentation },
+    { href: "/carousel-appointment", label: "Carousel - Appointment", icon: Presentation },
+    { href: "/carousel-finances", label: "Carousel - Finances", icon: DollarSign },
   ]
 
   return (
