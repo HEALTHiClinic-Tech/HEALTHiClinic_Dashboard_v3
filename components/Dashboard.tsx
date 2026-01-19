@@ -212,7 +212,7 @@ export default function Dashboard() {
             <CardHeader>
               <CardTitle className="text-2xl">No Data Available</CardTitle>
               <CardDescription>
-                The dashboard is ready but there's no appointment data for {currentYear} yet.
+                The dashboard is ready but there&apos;s no appointment data for {currentYear} yet.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

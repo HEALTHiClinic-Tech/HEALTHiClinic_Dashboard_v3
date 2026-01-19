@@ -17,9 +17,6 @@ import { useRouter } from 'next/navigation'
 
 export default function DataEntry() {
   const router = useRouter()
-  if (!isConfigured()) {
-    return <SetupNotice />
-  }
   const [doctors, setDoctors] = useState<Doctor[]>([])
   const [selectedWeek, setSelectedWeek] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 1 }))
   const [appointmentData, setAppointmentData] = useState<{ doctor_id: string; appointment_count: string }[]>([])
@@ -27,7 +24,7 @@ export default function DataEntry() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [showCalendar, setShowCalendar] = useState(false)
   const [existingData, setExistingData] = useState<any[]>([])
-  
+
   const [newDoctor, setNewDoctor] = useState({
     title: "Dr.",
     first_name: "",
@@ -36,17 +33,24 @@ export default function DataEntry() {
   })
   const [showAddDoctor, setShowAddDoctor] = useState(false)
 
-  useEffect(() => {
-    if (isConfigured()) {
-      fetchDoctors()
-    }
-  }, [])
+  const configured = isConfigured()
 
   useEffect(() => {
-    if (doctors.length > 0) {
+    if (configured) {
+      fetchDoctors()
+    }
+  }, [configured])
+
+  useEffect(() => {
+    if (doctors.length > 0 && configured) {
       fetchExistingData()
     }
-  }, [selectedWeek, doctors])
+  }, [selectedWeek, doctors, configured])
+
+  // Early return AFTER all hooks are called
+  if (!configured) {
+    return <SetupNotice />
+  }
 
   const fetchDoctors = async () => {
     const { data, error } = await supabase
