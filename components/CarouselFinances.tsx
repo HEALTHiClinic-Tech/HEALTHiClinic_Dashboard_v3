@@ -152,12 +152,22 @@ export default function CarouselFinances() {
               : 0
 
             // Prepare monthly data for charts
-            const monthlyData: RevenueDataPoint[] = doctorRevenue.map(r => ({
-              label: `${monthNames[r.month]}'${String(r.year).slice(2)}`,
-              value: parseFloat(r.total),
-              month: r.month,
-              year: r.year
-            }))
+            const monthlyData: RevenueDataPoint[] = doctorRevenue.map(r => {
+              // Safely parse the total - handle null, undefined, string, or number
+              const rawTotal = r.total
+              let parsedValue = 0
+              if (rawTotal !== null && rawTotal !== undefined) {
+                parsedValue = typeof rawTotal === 'number' ? rawTotal : parseFloat(String(rawTotal))
+                if (isNaN(parsedValue)) parsedValue = 0
+              }
+
+              return {
+                label: `${monthNames[r.month]}'${String(r.year).slice(2)}`,
+                value: parsedValue,
+                month: r.month,
+                year: r.year
+              }
+            })
 
             return {
               doctor_id: doctor.id,
@@ -520,37 +530,52 @@ export default function CarouselFinances() {
             </h2>
             <p className="text-white/80 text-lg font-semibold mb-4">{currentDoctor.specialty}</p>
 
-            {/* Total Revenue */}
+            {/* Total Revenue - Updates based on selected time interval */}
             <div className="bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-2xl p-4 mb-4 border border-emerald-400/30 shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:shadow-[0_0_40px_rgba(16,185,129,0.5)] transition-all">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-6 h-6 text-emerald-400 drop-shadow-[0_0_10px_rgba(16,185,129,0.8)]" />
-                  <span className="text-white/90 font-medium">Total Revenue</span>
+                  <div className="flex flex-col">
+                    <span className="text-white/90 font-medium">
+                      {timeInterval === 'all-time' ? 'Total Revenue' :
+                       timeInterval === 'ytd' ? 'YTD Revenue' :
+                       timeInterval === '3-monthly' ? '3-Month Revenue' :
+                       timeInterval === '6-monthly' ? '6-Month Revenue' :
+                       'Period Revenue'}
+                    </span>
+                    <span className="text-white/50 text-xs">
+                      {chartData.length} {chartData.length === 1 ? 'month' : 'months'}
+                    </span>
+                  </div>
                 </div>
                 <span className="text-3xl font-bold text-emerald-400 drop-shadow-[0_0_15px_rgba(16,185,129,0.6)]">
-                  {formatCurrency(currentDoctor.total_revenue)}
+                  {formatCurrency(periodTotal)}
                 </span>
               </div>
             </div>
 
             <div className="space-y-3">
-              {/* Monthly Average */}
+              {/* Monthly Average - Updates based on selected time interval */}
               <div className="bg-white/5 rounded-2xl p-4 hover:bg-white/10 transition-all">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-white/80 text-sm font-semibold uppercase tracking-wide">Monthly Average</span>
+                  <span className="text-white/80 text-sm font-semibold uppercase tracking-wide">
+                    {timeInterval === 'all-time' ? 'Monthly Average' : 'Period Average'}
+                  </span>
                   <TrendingUp className="w-5 h-5 text-white/60" />
                 </div>
-                <div className="text-3xl font-black text-white">{formatCurrency(currentDoctor.avg_monthly_revenue)}</div>
+                <div className="text-3xl font-black text-white">{formatCurrency(periodAverage)}</div>
               </div>
 
-              {/* Best Month */}
+              {/* Best Month - Updates based on selected time interval */}
               <div className="bg-white/5 rounded-2xl p-4 hover:bg-white/10 transition-all">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-white/80 text-sm font-semibold uppercase tracking-wide">Best Month</span>
+                  <span className="text-white/80 text-sm font-semibold uppercase tracking-wide">
+                    {timeInterval === 'all-time' ? 'Best Month' : 'Best in Period'}
+                  </span>
                   <Sparkles className="w-5 h-5 text-yellow-400" />
                 </div>
-                <div className="text-lg font-bold text-white/80 mb-1">{currentDoctor.best_month.month}</div>
-                <div className="text-3xl font-black text-white">{formatCurrency(currentDoctor.best_month.value)}</div>
+                <div className="text-lg font-bold text-white/80 mb-1">{bestPeriod?.label || '-'}</div>
+                <div className="text-3xl font-black text-white">{bestPeriod ? formatCurrency(bestPeriod.value) : '$0'}</div>
               </div>
 
               {/* Growth */}
@@ -567,10 +592,12 @@ export default function CarouselFinances() {
                 </div>
               </div>
 
-              {/* Months Active */}
+              {/* Months in Period - Updates based on selected time interval */}
               <div className="bg-white/5 rounded-2xl p-4 hover:bg-white/10 transition-all">
-                <span className="text-white/80 text-sm font-semibold uppercase tracking-wide">Months Active</span>
-                <div className="text-3xl font-black text-white mt-1">{currentDoctor.months_worked} months</div>
+                <span className="text-white/80 text-sm font-semibold uppercase tracking-wide">
+                  {timeInterval === 'all-time' ? 'Total Months Active' : 'Months in Period'}
+                </span>
+                <div className="text-3xl font-black text-white mt-1">{chartData.length} {chartData.length === 1 ? 'month' : 'months'}</div>
               </div>
             </div>
           </div>
@@ -599,11 +626,13 @@ export default function CarouselFinances() {
                 <div className="absolute inset-0 pb-8">
                   <div className="relative h-full flex items-end justify-between gap-2">
                     {chartData.length > 0 ? chartData.map((point, i) => {
-                      const maxValue = Math.max(...chartData.map(d => d.value), 1000)
-                      const heightPercent = (point.value / maxValue) * 100
+                      // Filter out any NaN values and ensure minimum maxValue of 1000
+                      const validValues = chartData.map(d => d.value).filter(v => !isNaN(v) && v >= 0)
+                      const maxValue = validValues.length > 0 ? Math.max(...validValues, 1000) : 1000
+                      const heightPercent = maxValue > 0 ? Math.min(Math.max((point.value / maxValue) * 100, 0), 100) : 0
 
                       return (
-                        <div key={i} className="flex-1 flex flex-col items-center justify-end relative group/bar">
+                        <div key={i} className="flex-1 h-full flex flex-col items-center justify-end relative group/bar">
                           {/* Value label */}
                           <div className="absolute bottom-full mb-2 opacity-0 group-hover/bar:opacity-100 transition-opacity duration-200 z-10">
                             <span className="text-white font-bold text-xs bg-black/60 backdrop-blur px-2 py-1 rounded-lg whitespace-nowrap">
