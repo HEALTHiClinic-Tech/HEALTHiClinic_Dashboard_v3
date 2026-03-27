@@ -491,7 +491,7 @@ export default function ComparisonTable() {
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-yellow-600">
-              {comparisons[0]?.doctor ? `Dr. ${comparisons[0].doctor.last_name}` : '-'}
+              {comparisons[0]?.doctor ? `${comparisons[0].doctor.title || 'Dr.'} ${comparisons[0].doctor.last_name}` : '-'}
             </div>
             <div className="text-xs text-gray-500 uppercase tracking-wide">Top Performer</div>
           </div>

@@ -351,7 +351,7 @@ export default function Dashboard() {
               >
                 {topPerformer ? (
                   <>
-                    <span className="break-words">Dr. {topPerformer.first_name} {topPerformer.last_name}</span>
+                    <span className="break-words">{topPerformer.title || 'Dr.'} {topPerformer.first_name} {topPerformer.last_name}</span>
                     <ExternalLink className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
                   </>
                 ) : 'N/A'}
@@ -480,7 +480,7 @@ export default function Dashboard() {
                               className="font-medium cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center group"
                               onClick={() => router.push(`/doctor/${doctor.doctor_id}`)}
                             >
-                              Dr. {doctor.first_name} {doctor.last_name}
+                              {doctor.title || 'Dr.'} {doctor.first_name} {doctor.last_name}
                               <ExternalLink className="ml-2 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </span>
                           </td>

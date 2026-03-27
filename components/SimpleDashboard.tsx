@@ -165,7 +165,7 @@ export default function SimpleDashboard() {
                     className="font-medium cursor-pointer hover:text-blue-600 transition-colors inline-flex items-center group"
                     onClick={() => router.push(`/doctor/${doctor.doctor_id}`)}
                   >
-                    Dr. {doctor.first_name} {doctor.last_name}
+                    {doctor.title || 'Dr.'} {doctor.first_name} {doctor.last_name}
                     <ExternalLink className="ml-2 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </p>
                   <p className="text-sm text-gray-600">

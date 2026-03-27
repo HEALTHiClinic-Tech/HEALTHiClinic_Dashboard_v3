@@ -167,7 +167,7 @@ export default function DoctorManagement() {
   }
 
   const handleDeleteDoctor = async (doctor: Doctor) => {
-    if (!confirm(`Are you sure you want to delete Dr. ${doctor.first_name} ${doctor.last_name}? This will also delete all their appointment records.`)) {
+    if (!confirm(`Are you sure you want to delete ${doctor.title || 'Dr.'} ${doctor.first_name} ${doctor.last_name}? This will also delete all their appointment records.`)) {
       return
     }
 
@@ -478,7 +478,7 @@ export default function DoctorManagement() {
                             className="font-semibold text-lg inline-flex items-center cursor-pointer hover:text-blue-600 transition-colors group"
                             onClick={() => router.push(`/doctor/${doctor.id}`)}
                           >
-                            Dr. {doctor.first_name} {doctor.last_name}
+                            {doctor.title || 'Dr.'} {doctor.first_name} {doctor.last_name}
                             <ExternalLink className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                             {!doctor.active && (
                               <span className="ml-2 px-2 py-1 bg-gray-200 text-gray-600 text-xs rounded-full">
@@ -572,7 +572,7 @@ export default function DoctorManagement() {
                         <User className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-600">Full Name</p>
-                          <p className="font-medium">Dr. {selectedDoctor.first_name} {selectedDoctor.last_name}</p>
+                          <p className="font-medium">{selectedDoctor.title || 'Dr.'} {selectedDoctor.first_name} {selectedDoctor.last_name}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">

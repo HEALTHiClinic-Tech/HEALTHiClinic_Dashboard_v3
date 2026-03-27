@@ -627,7 +627,7 @@ export default function Carousel2() {
             </div>
             
             <h2 className="text-3xl font-black text-white mb-2 tracking-tight">
-              Dr. {currentDoctor.first_name} {currentDoctor.last_name}
+              {currentDoctor.title || 'Dr.'} {currentDoctor.first_name} {currentDoctor.last_name}
             </h2>
             <p className="text-white/80 text-lg font-semibold mb-4">{currentDoctor.specialty || 'Phlebologist'}</p>
             

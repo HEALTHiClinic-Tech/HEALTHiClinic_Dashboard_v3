@@ -35,6 +35,16 @@ const appointmentData = [
   { weekStart: '2026-01-05', year: 2026, weekNumber: 2, appointments: 0 },    // Jan 5 - Jan 11
   { weekStart: '2026-01-12', year: 2026, weekNumber: 3, appointments: 0 },    // Jan 12 - Jan 18
   { weekStart: '2026-01-19', year: 2026, weekNumber: 4, appointments: 7 },    // Jan 19 - Jan 25
+  { weekStart: '2026-01-26', year: 2026, weekNumber: 5, appointments: 0 },    // Jan 26 - Feb 1 (Australia Day week)
+  { weekStart: '2026-02-02', year: 2026, weekNumber: 6, appointments: 12 },   // Feb 2 - Feb 8
+  { weekStart: '2026-02-09', year: 2026, weekNumber: 7, appointments: 7 },    // Feb 9 - Feb 15
+  { weekStart: '2026-02-16', year: 2026, weekNumber: 8, appointments: 7 },    // Feb 16 - Feb 22
+  { weekStart: '2026-02-23', year: 2026, weekNumber: 9, appointments: 6 },    // Feb 23 - Mar 1
+  { weekStart: '2026-03-02', year: 2026, weekNumber: 10, appointments: 9 },   // Mar 2 - Mar 8
+  { weekStart: '2026-03-09', year: 2026, weekNumber: 11, appointments: 13 },  // Mar 9 - Mar 15
+  { weekStart: '2026-03-16', year: 2026, weekNumber: 12, appointments: 4 },   // Mar 16 - Mar 22
+  { weekStart: '2026-03-23', year: 2026, weekNumber: 13, appointments: 4 },   // Mar 23 - Mar 29
+  { weekStart: '2026-03-30', year: 2026, weekNumber: 14, appointments: 9 },   // Mar 30 - Apr 5
 ];
 
 async function populateAppointments() {

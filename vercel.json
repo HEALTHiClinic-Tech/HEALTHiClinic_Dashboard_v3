@@ -5,10 +5,19 @@
   "installCommand": "npm install",
   "regions": ["iad1"],
   "functions": {
+    "app/api/cron/**/*.ts": {
+      "maxDuration": 60
+    },
     "app/api/**/*.ts": {
       "maxDuration": 30
     }
   },
+  "crons": [
+    {
+      "path": "/api/cron/sync-appointments",
+      "schedule": "0 20 * * 0"
+    }
+  ],
   "github": {
     "silent": false
   }
